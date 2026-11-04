@@ -69,7 +69,7 @@ extension CMSampleBuffer {
     /// Copies the PCM into memory we own, so we don't hold on to ScreenCaptureKit's buffer pool.
     func deepCopiedAudio() -> CMSampleBuffer? {
         guard let format = formatDescription, CMSampleBufferDataIsReady(self) else { return nil }
-        let copy = try? withAudioBufferList { list, _ -> CMSampleBuffer? in
+        return try? withAudioBufferList { list, _ -> CMSampleBuffer? in
             var out: CMSampleBuffer?
             guard CMAudioSampleBufferCreateWithPacketDescriptions(
                 allocator: kCFAllocatorDefault, dataBuffer: nil, dataReady: false,
@@ -82,6 +82,5 @@ extension CMSampleBuffer {
             else { return nil }
             return out
         }
-        return copy ?? nil
     }
 }

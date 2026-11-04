@@ -46,8 +46,8 @@ enum ClipWriter {
 
         let writer = try AVAssetWriter(outputURL: dst, fileType: .mp4)
         writer.shouldOptimizeForNetworkUse = true
-        let vIn = AVAssetWriterInput(mediaType: .video, outputSettings: nil,
-                                     sourceFormatHint: try await vTrack.load(.formatDescriptions).first)
+        let vFormat = try await vTrack.load(.formatDescriptions).first
+        let vIn = AVAssetWriterInput(mediaType: .video, outputSettings: nil, sourceFormatHint: vFormat)
         writer.add(vIn)
 
         var aOut: AVAssetReaderAudioMixOutput?
