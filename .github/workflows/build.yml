@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   build:
-    runs-on: macos-15
+    runs-on: macos-latest
     env:
       RIBBON_CERT_P12: ${{ secrets.RIBBON_CERT_P12 }}
       RIBBON_CERT_PASSWORD: ${{ secrets.RIBBON_CERT_PASSWORD }}
