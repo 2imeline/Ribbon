@@ -17,6 +17,7 @@ enum K {
     static let hotkeyCode = "hotkeyCode"
     static let hotkeyMods = "hotkeyMods"
     static let hotkeyLabel = "hotkeyLabel"
+    static let target = "captureTarget"  // Target.auto, Target.screen, or an app's bundle ID
 }
 
 enum Defaults {
@@ -26,7 +27,7 @@ enum Defaults {
         K.clipSeconds: 30, K.height: 1080, K.fps: 60, K.bitrate: 15, K.hevc: false,
         K.game: true, K.discord: true, K.mic: true, K.micID: "",
         K.folder: folder, K.sound: true,
-        K.hotkeyCode: kVK_ANSI_C, K.hotkeyMods: optionKey | shiftKey, K.hotkeyLabel: hotkeyLabel,
+        K.target: "auto", K.hotkeyCode: kVK_ANSI_C, K.hotkeyMods: optionKey | shiftKey, K.hotkeyLabel: hotkeyLabel,
     ]
 }
 
@@ -43,8 +44,10 @@ struct Config: Equatable {
     var discord: Bool
     var mic: Bool
     var micID: String
+    /// Bundle ID of the app being captured on its own, or nil for the whole screen.
+    var target: String?
 
-    static func current() -> Config {
+    static func current(target: String?) -> Config {
         let d = UserDefaults.standard
         return Config(
             clipSeconds: min(max(d.integer(forKey: K.clipSeconds), 5), 600),
@@ -55,7 +58,8 @@ struct Config: Equatable {
             game: d.bool(forKey: K.game),
             discord: d.bool(forKey: K.discord),
             mic: d.bool(forKey: K.mic),
-            micID: d.string(forKey: K.micID) ?? ""
+            micID: d.string(forKey: K.micID) ?? "",
+            target: target
         )
     }
 

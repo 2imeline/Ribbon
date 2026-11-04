@@ -32,6 +32,7 @@ private struct MenuContent: View {
         Text(recorder.status)
         Button("Save Clip (\(hotkey))") { recorder.saveClip() }
             .disabled(!recorder.isRecording)
+        TargetPicker().pickerStyle(.menu)
         Divider()
         Button("Open Clips…") { openWindow(id: "library"); NSApp.activate() }
         Button("Settings…") { openWindow(id: "settings"); NSApp.activate() }

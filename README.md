@@ -18,7 +18,16 @@ A ⏺ icon appears in the menu bar. That's all of Ribbon you'll see. It has no D
 
 Menu bar → **Check for Updates…**, or Settings → About. Ribbon downloads the new version from this repo's Releases, swaps itself in place and relaunches. Your clips and settings stay as they are. It also checks quietly once at launch. If there's an update, the menu item changes to "Update to 1.0.x…".
 
-## Using it
+## What it records
+
+Pick this from the menu bar → **Record**, or in Settings:
+
+- **Auto (default):** when you open a game (Roblox, Steam/Epic games, App Store and Arcade games, League, WoW, GeForce NOW and more), Ribbon switches to that game automatically and clips **only its window and its audio**. When no game is running, it records the whole screen. The menu shows what it found, for example "Auto: Roblox".
+- **Whole Screen:** everything on your main display.
+- **Any app:** pick an app from the list and Ribbon records only that app. If the app isn't running, Ribbon records the whole screen until it starts.
+
+Detection runs only when apps open, quit or switch, so it adds no load while you play. If a game isn't detected, pick it from the list.
+
 
 | | |
 |---|---|
@@ -36,7 +45,7 @@ Clips are saved to `~/Movies/Ribbon` as `<Game> 2026-11-04 14.33.02.mp4`. The ga
 - **Clip length:** 5 s to 10 min (default 30 s).
 - **Resolution:** Native, 1440p, 1080p or 720p. **Frame rate:** 30, 60 or 120. **Bitrate:** 1–100 Mbps (default 15).
 - **Codec:** H.264 (default, plays everywhere) or HEVC (smaller files).
-- **Audio:** game/system audio, Discord, and microphone each turn on or off separately, and you can pick the microphone. All enabled sources are mixed into one track so every player hears them.
+- **Audio:** game/app audio (the target app's audio, or all system audio when recording the whole screen), Discord, and microphone each turn on or off separately, and you can pick the microphone. All enabled sources are mixed into one track so every player hears them.
   Turning Discord off also hides Discord's windows from clips, because macOS filters audio per app along with its windows.
 - **Hotkey**, **save folder**, **save sound**, **open at login**.
 

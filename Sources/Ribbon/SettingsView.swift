@@ -29,7 +29,8 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
-            Section("Replay") {
+            Section {
+                TargetPicker()
                 LabeledContent("Clip length") {
                     HStack {
                         TextField("", value: $clipSeconds, format: .number)
@@ -40,6 +41,11 @@ struct SettingsView: View {
                     }
                 }
                 LabeledContent("Save clip shortcut") { HotkeyRecorder() }
+            } header: {
+                Text("Replay")
+            } footer: {
+                Text("Auto records just the game you're playing (its window and its audio) and records the whole screen when no game is open.")
+                    .foregroundStyle(.secondary)
             }
 
             Section {
@@ -73,7 +79,7 @@ struct SettingsView: View {
             }
 
             Section {
-                Toggle("Game & system audio", isOn: $game)
+                Toggle("Game / app audio", isOn: $game)
                 Toggle("Discord", isOn: $discord)
                 Toggle("Microphone", isOn: $mic)
                 Picker("Microphone device", selection: $micID) {
@@ -132,6 +138,31 @@ struct SettingsView: View {
             loginError = nil
         } catch {
             loginError = error.localizedDescription
+        }
+    }
+}
+
+/// Auto (detect games) / Whole Screen / any running app. Used in the menu bar and in Settings.
+struct TargetPicker: View {
+    @AppStorage(K.target) private var target = Target.auto
+    @ObservedObject private var recorder = Recorder.shared
+
+    private var autoLabel: String {
+        guard let id = recorder.detectedGame else { return "Auto (detect games)" }
+        return "Auto: \(recorder.apps.first { $0.id == id }?.name ?? GameDetector.name(of: id))"
+    }
+
+    private var isMissingApp: Bool {
+        target != Target.auto && target != Target.screen && !recorder.apps.contains { $0.id == target }
+    }
+
+    var body: some View {
+        Picker("Record", selection: $target) {
+            Text(autoLabel).tag(Target.auto)
+            Text("Whole Screen").tag(Target.screen)
+            Divider()
+            ForEach(recorder.apps) { Text($0.name).tag($0.id) }
+            if isMissingApp { Text("\(GameDetector.name(of: target)) (not running)").tag(target) }
         }
     }
 }

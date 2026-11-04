@@ -16,6 +16,8 @@
 	<string>1.0.__BUILD__</string>
 	<key>CFBundleVersion</key>
 	<string>__BUILD__</string>
+	<key>CFBundleIconFile</key>
+	<string>AppIcon</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>15.0</string>
 	<key>LSUIElement</key>
