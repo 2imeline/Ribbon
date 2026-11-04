@@ -1,0 +1,54 @@
+name: Build
+
+on:
+  push:
+    branches: [main, claude/ecstatic-cerf-0mo8wn]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-15
+    env:
+      RIBBON_CERT_P12: ${{ secrets.RIBBON_CERT_P12 }}
+      RIBBON_CERT_PASSWORD: ${{ secrets.RIBBON_CERT_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Test
+        run: swift test
+
+      # Optional: a stable self-signed certificate keeps macOS permissions across updates (see README).
+      - name: Import signing certificate
+        if: env.RIBBON_CERT_P12 != ''
+        run: |
+          KC="$RUNNER_TEMP/ribbon.keychain-db"
+          echo "$RIBBON_CERT_P12" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security create-keychain -p ci "$KC"
+          security set-keychain-settings -lut 21600 "$KC"
+          security unlock-keychain -p ci "$KC"
+          security import "$RUNNER_TEMP/cert.p12" -k "$KC" -P "$RIBBON_CERT_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k ci "$KC"
+          security list-keychains -d user -s "$KC" $(security list-keychains -d user | tr -d '"')
+          echo "SIGN_IDENTITY=Ribbon Self-Signed" >> "$GITHUB_ENV"
+
+      - name: Bundle
+        run: BUILD_NUMBER=${{ github.run_number }} scripts/bundle.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Ribbon
+          path: build/Ribbon.zip
+
+      - name: Publish release
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NOTES: ${{ github.event.head_commit.message }}
+        run: |
+          gh release create "v1.0.${{ github.run_number }}" build/Ribbon.zip \
+            --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --latest \
+            --title "Ribbon 1.0.${{ github.run_number }}" --notes "${NOTES:-Manual build}"
