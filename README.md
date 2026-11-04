@@ -75,6 +75,8 @@ Builds made after that are signed with the certificate. After you install the fi
 
 ## Building from source
 
+If you build it yourself, create the `Ribbon Self-Signed` certificate from step 1 above once. `scripts/bundle.sh` uses it automatically, and macOS then keeps Ribbon's Screen Recording permission across rebuilds.
+
 Requires macOS 15+ and the Xcode Command Line Tools (`xcode-select --install`).
 
 ```bash
