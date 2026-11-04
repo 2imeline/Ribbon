@@ -12,7 +12,7 @@ APP=build/Ribbon.app
 rm -rf build
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN/Ribbon" "$APP/Contents/MacOS/Ribbon"
-cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
+cp Resources/AppIcon.icns Resources/Saved.wav "$APP/Contents/Resources/"
 sed "s/__BUILD__/$BUILD/g" Resources/Info.plist > "$APP/Contents/Info.plist"
 
 codesign --force --sign "${SIGN_IDENTITY:--}" "$APP"

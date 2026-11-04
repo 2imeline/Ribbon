@@ -20,25 +20,24 @@ Menu bar → **Check for Updates…**, or Settings → About. Ribbon downloads t
 
 ## What it records
 
-Pick this from the menu bar → **Record**, or in Settings:
+Ribbon **detects games on its own**: Roblox, Steam and Epic games, App Store and Arcade games, League, WoW, GeForce NOW and more. When you open one, a small popup says **"Now clipping Roblox · ⌥⇧C to save"**, and clips then contain **only that game's window and its audio**, plus Discord and your mic if those are on. When no game is open, Ribbon records the whole screen.
 
-- **Auto (default):** when you open a game (Roblox, Steam/Epic games, App Store and Arcade games, League, WoW, GeForce NOW and more), Ribbon switches to that game automatically and clips **only its window and its audio**. When no game is running, it records the whole screen. The menu shows what it found, for example "Auto: Roblox".
-- **Whole Screen:** everything on your main display.
-- **Any app:** pick an app from the list and Ribbon records only that app. If the app isn't running, Ribbon records the whole screen until it starts.
+To record something else, use the menu bar → **Record**: pick **Whole Screen** or any running app. Your pick stays until you choose **Detect games** again. If a game isn't detected, pick it there.
 
-Detection runs only when apps open, quit or switch, so it adds no load while you play. If a game isn't detected, pick it from the list.
+Detection only runs when apps open, quit or switch, so it costs nothing while you play.
 
+## Using it
 
 | | |
 |---|---|
-| Save a clip | **⌥⇧C**, or the menu bar → Save Clip. A soft "tink" means it's saved |
+| Save a clip | **⌥⇧C**, or the menu bar → Save Clip. A "da-ding" and a "Clip saved" popup mean it's saved |
 | Watch clips | Menu bar → **Open Clips…**. Clips are grouped by day, newest first, and you can filter by game |
 | Rename | Double-click the name, right-click → Rename, or edit the title in the player |
 | Trim | In the player → **Trim**. Drag the yellow handles and press Trim. Ribbon saves a "(trimmed)" copy without re-encoding |
 | Share to Discord | **Copy**, then paste in Discord. You can also drag a clip out of the library |
 | Show in Finder / Delete | Right-click a clip, or use the buttons in the player. Delete moves the clip to the Trash |
 
-Clips are saved to `~/Movies/Ribbon` as `<Game> 2026-11-04 14.33.02.mp4`. The game is whichever app was in front when you clipped.
+Clips are saved to `~/Movies/Ribbon` as `<Game> 2026-11-04 14.33.02.mp4`. The name is the game being recorded, or the app in front when recording the whole screen.
 
 ## Settings
 

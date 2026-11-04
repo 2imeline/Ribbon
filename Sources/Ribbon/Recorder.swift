@@ -97,7 +97,7 @@ final class Recorder: ObservableObject {
     @Published var userPaused = false { didSet { if oldValue != userPaused { restart() } } }
     /// Apps that can be picked as a capture target (refreshed when apps launch or quit).
     @Published private(set) var apps: [RunningApp] = []
-    /// The game Auto mode found, if any (bundle ID).
+    /// The game detection found, if any (bundle ID).
     @Published private(set) var detectedGame: String?
     /// Name of the app being captured on its own, or nil for the whole screen.
     @Published private(set) var targetName: String?
@@ -107,6 +107,9 @@ final class Recorder: ObservableObject {
     private var streams: [SCStream] = []
     private var running: Config?
     private var task: Task<Void, Never>?
+    private var announced: String?  // last target app the toast told the user about
+    private static let savedSound = Bundle.main.url(forResource: "Saved", withExtension: "wav")
+        .flatMap { NSSound(contentsOf: $0, byReference: true) } ?? NSSound(named: "Glass")
 
     private init() {
         buffer.onStop = { [weak self] error in self?.streamStopped(error) }
@@ -151,7 +154,7 @@ final class Recorder: ObservableObject {
         }
     }
 
-    /// Auto mode: the frontmost game wins; otherwise keep the last one while it runs; otherwise any running game.
+    /// Detection: the frontmost game wins; otherwise keep the last one while it runs; otherwise any running game.
     private func updateDetectedGame() {
         let launched = NSWorkspace.shared.runningApplications
         if let front = NSWorkspace.shared.frontmostApplication, GameDetector.isGame(front) {
@@ -211,7 +214,10 @@ final class Recorder: ObservableObject {
         Task.detached(priority: .utility) {
             do {
                 try await ClipWriter.write(video: snap.video, audio: snap.audio, game: game, to: url)
-                if sound { await MainActor.run { _ = NSSound(named: "Tink")?.play() } }
+                await MainActor.run {
+                    if sound { Recorder.savedSound?.stop(); Recorder.savedSound?.play() }
+                    Toast.show("Clip saved", icon: "checkmark.circle.fill")
+                }
             } catch {
                 await MainActor.run {
                     Recorder.shared.status = "Couldn't save clip: \(error.localizedDescription)"
@@ -305,10 +311,23 @@ final class Recorder: ObservableObject {
             sc.captureMicrophone = cfg.mic
             if cfg.mic && !cfg.micID.isEmpty { sc.microphoneCaptureDeviceID = cfg.micID }
 
-            // A target app is captured on its own: only its windows and only its audio.
+            // A target app is captured on its own: only its windows and only its audio. Discord's audio is
+            // added by including Discord in the same filter minus its windows. One stream means each sound is
+            // captured exactly once (a separate Discord stream also picked up game audio: an echo).
             // Whole screen: everything except Ribbon (and Discord, when Discord is off).
-            let filter = targetApp.map { SCContentFilter(display: display, including: [$0], exceptingWindows: []) }
-                ?? SCContentFilter(display: display, excludingApplications: cfg.discord ? me : me + discordApps, exceptingWindows: [])
+            let targetIsDiscord = targetApp.map { discordBundleIDs.contains($0.bundleIdentifier) } ?? false
+            let filter: SCContentFilter
+            if let targetApp {
+                let addDiscord = cfg.game && cfg.discord && !targetIsDiscord
+                let discordWindows = content.windows.filter { w in
+                    discordBundleIDs.contains(w.owningApplication?.bundleIdentifier ?? "")
+                }
+                filter = SCContentFilter(display: display, including: [targetApp] + (addDiscord ? discordApps : []),
+                                         exceptingWindows: addDiscord ? discordWindows : [])
+            } else {
+                filter = SCContentFilter(display: display, excludingApplications: cfg.discord ? me : me + discordApps,
+                                         exceptingWindows: [])
+            }
             let stream = SCStream(filter: filter, configuration: sc, delegate: buffer)
             try stream.addStreamOutput(buffer, type: .screen, sampleHandlerQueue: buffer.queue)
             if cfg.game { try stream.addStreamOutput(buffer, type: .audio, sampleHandlerQueue: buffer.queue) }
@@ -316,9 +335,8 @@ final class Recorder: ObservableObject {
             streams = [stream]
             try await stream.startCapture()
 
-            // Discord audio that the main stream doesn't include: a tiny audio-only stream of just Discord.
-            let targetIsDiscord = targetApp.map { discordBundleIDs.contains($0.bundleIdentifier) } ?? false
-            if cfg.discord && !discordApps.isEmpty && !targetIsDiscord && (!cfg.game || targetApp != nil) {
+            // Game audio off but Discord on: the main stream has no audio, so a Discord-only stream can't double anything.
+            if cfg.discord && !cfg.game && !discordApps.isEmpty && !targetIsDiscord {
                 let ac = SCStreamConfiguration()
                 ac.width = 2
                 ac.height = 2
@@ -340,6 +358,11 @@ final class Recorder: ObservableObject {
             isRecording = true
             targetName = targetApp?.applicationName
             status = recordingStatus(cfg)
+            if let targetApp, targetApp.bundleIdentifier != announced {
+                let hotkey = UserDefaults.standard.string(forKey: K.hotkeyLabel) ?? Defaults.hotkeyLabel
+                Toast.show("Now clipping \(targetApp.applicationName) · \(hotkey) to save", icon: "gamecontroller.fill")
+            }
+            announced = targetApp?.bundleIdentifier
         } catch {
             await stopStreams()
             status = "Couldn't start recording: \(error.localizedDescription)"

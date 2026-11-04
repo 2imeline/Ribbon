@@ -30,7 +30,6 @@ struct SettingsView: View {
     var body: some View {
         Form {
             Section {
-                TargetPicker()
                 LabeledContent("Clip length") {
                     HStack {
                         TextField("", value: $clipSeconds, format: .number)
@@ -44,7 +43,7 @@ struct SettingsView: View {
             } header: {
                 Text("Replay")
             } footer: {
-                Text("Auto records just the game you're playing (its window and its audio) and records the whole screen when no game is open.")
+                Text("Games are detected automatically: Ribbon records just the game (its window and its audio), or the whole screen when no game is open. To record something else, use Record in the menu bar.")
                     .foregroundStyle(.secondary)
             }
 
@@ -142,14 +141,14 @@ struct SettingsView: View {
     }
 }
 
-/// Auto (detect games) / Whole Screen / any running app. Used in the menu bar and in Settings.
+/// Detect games (default) / Whole Screen / any running app. A manual pick lasts until "Detect games" is picked again.
 struct TargetPicker: View {
     @AppStorage(K.target) private var target = Target.auto
     @ObservedObject private var recorder = Recorder.shared
 
     private var autoLabel: String {
-        guard let id = recorder.detectedGame else { return "Auto (detect games)" }
-        return "Auto: \(recorder.apps.first { $0.id == id }?.name ?? GameDetector.name(of: id))"
+        guard let id = recorder.detectedGame else { return "Detect games" }
+        return "Detect games (\(recorder.apps.first { $0.id == id }?.name ?? GameDetector.name(of: id)))"
     }
 
     private var isMissingApp: Bool {
