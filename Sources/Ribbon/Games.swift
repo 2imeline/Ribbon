@@ -67,5 +67,7 @@ enum GameDetector {
 /// Values stored in K.target besides a bundle ID.
 enum Target {
     static let auto = "auto"
-    static let screen = "screen"
+    static let screen = "screen"  // the main display; "screen:<CGDirectDisplayID>" is a specific one
+
+    static func isScreen(_ value: String) -> Bool { value == screen || value.hasPrefix(screen + ":") }
 }

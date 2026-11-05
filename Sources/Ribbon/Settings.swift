@@ -46,9 +46,12 @@ struct Config: Equatable {
     var micID: String
     /// Bundle ID of the app being captured on its own, or nil for the whole screen.
     var target: String?
+    /// Display picked for whole-screen recording, or nil for the main display.
+    var display: UInt32?
 
     static func current(target: String?) -> Config {
         let d = UserDefaults.standard
+        let choice = d.string(forKey: K.target) ?? ""
         return Config(
             clipSeconds: min(max(d.integer(forKey: K.clipSeconds), 5), 600),
             height: max(d.integer(forKey: K.height), 0),
@@ -59,7 +62,8 @@ struct Config: Equatable {
             discord: d.bool(forKey: K.discord),
             mic: d.bool(forKey: K.mic),
             micID: d.string(forKey: K.micID) ?? "",
-            target: target
+            target: target,
+            display: choice.hasPrefix("screen:") ? UInt32(choice.dropFirst("screen:".count)) : nil
         )
     }
 

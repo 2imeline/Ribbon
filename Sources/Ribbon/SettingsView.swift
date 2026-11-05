@@ -152,13 +152,25 @@ struct TargetPicker: View {
     }
 
     private var isMissingApp: Bool {
-        target != Target.auto && target != Target.screen && !recorder.apps.contains { $0.id == target }
+        target != Target.auto && !Target.isScreen(target) && !recorder.apps.contains { $0.id == target }
+    }
+
+    private var screens: [(id: String, name: String)] {
+        NSScreen.screens.compactMap { screen in
+            (screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber)
+                .map { (id: "\(Target.screen):\($0.uint32Value)", name: screen.localizedName) }
+        }
     }
 
     var body: some View {
         Picker("Record", selection: $target) {
             Text(autoLabel).tag(Target.auto)
-            Text("Whole Screen").tag(Target.screen)
+            if screens.count > 1 {
+                ForEach(screens, id: \.id) { Text("Whole Screen: \($0.name)").tag($0.id) }
+            } else {
+                // Keep a monitor picked earlier selected even if only one is connected now.
+                Text("Whole Screen").tag(Target.isScreen(target) ? target : Target.screen)
+            }
             Divider()
             ForEach(recorder.apps) { Text($0.name).tag($0.id) }
             if isMissingApp { Text("\(GameDetector.name(of: target)) (not running)").tag(target) }

@@ -22,7 +22,7 @@ Menu bar → **Check for Updates…**, or Settings → About. Ribbon downloads t
 
 Ribbon **detects games on its own**: Roblox, Steam and Epic games, App Store and Arcade games, League, WoW, GeForce NOW and more. When you open one, a small popup says **"Now clipping Roblox · ⌥⇧C to save"**, and clips then contain **only that game's window and its audio**, plus Discord and your mic if those are on. When no game is open, Ribbon records the whole screen.
 
-To record something else, use the menu bar → **Record**: pick **Whole Screen** or any running app. Your pick stays until you choose **Detect games** again. If a game isn't detected, pick it there.
+To record something else, use the menu bar → **Record**: pick **Whole Screen** (with more than one monitor, pick which one) or any running app. Your pick stays until you choose **Detect games** again. If a game isn't detected, pick it there.
 
 Detection only runs when apps open, quit or switch, so it costs nothing while you play.
 

@@ -124,6 +124,10 @@ final class Recorder: ObservableObject {
                 Task { @MainActor in self?.setSystemPaused(paused) }
             }
         }
+        // A monitor was plugged in or removed: re-pick the display (falls back to the main one if it's gone).
+        NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main) { [weak self] _ in
+            Task { @MainActor in if let c = self?.running, c.target == nil { self?.restart() } }
+        }
         let dnc = DistributedNotificationCenter.default()
         for (name, paused) in [("com.apple.screenIsLocked", true), ("com.apple.screenIsUnlocked", false)] {
             dnc.addObserver(forName: .init(name), object: nil, queue: .main) { [weak self] _ in
@@ -169,8 +173,8 @@ final class Recorder: ObservableObject {
     /// What to capture right now: an app's bundle ID (only if it's running), or nil for the whole screen.
     private func resolvedTarget() -> String? {
         let choice = UserDefaults.standard.string(forKey: K.target) ?? Target.auto
+        if Target.isScreen(choice) { return nil }
         switch choice {
-        case Target.screen: return nil
         case Target.auto: return detectedGame
         default: return NSWorkspace.shared.runningApplications.contains { $0.bundleIdentifier == choice } ? choice : nil
         }
@@ -283,7 +287,8 @@ final class Recorder: ObservableObject {
             let mainDisplay = content.displays.first(where: { $0.displayID == CGMainDisplayID() }) ?? content.displays.first
             guard let display = targetWindow.flatMap({ w in
                 content.displays.first { $0.frame.contains(CGPoint(x: w.frame.midX, y: w.frame.midY)) }
-            }) ?? mainDisplay else { throw RibbonError("No display found.") }
+            }) ?? cfg.display.flatMap({ id in content.displays.first { $0.displayID == id } }) ?? mainDisplay
+            else { throw RibbonError("No display found.") }
 
             // Scale on the GPU (inside ScreenCaptureKit) to the target height, keeping the display's aspect.
             let mode = CGDisplayCopyDisplayMode(display.displayID)
