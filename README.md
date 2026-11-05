@@ -11,6 +11,7 @@ Ribbon is an instant-replay clipper for Apple Silicon Macs that you can leave ru
    xattr -dr com.apple.quarantine /Applications/Ribbon.app
    ```
 4. When asked, allow **Screen Recording** and **Microphone**. If you're asked to reopen Ribbon after granting Screen Recording, do that.
+   If Ribbon keeps asking even though it's turned on, use **Fix Screen Recording Permission…** in its menu.
 
 A ⏺ icon appears in the menu bar. That's all of Ribbon you'll see. It has no Dock icon.
 

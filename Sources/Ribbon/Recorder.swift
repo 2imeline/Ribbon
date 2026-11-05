@@ -101,6 +101,8 @@ final class Recorder: ObservableObject {
     @Published private(set) var detectedGame: String?
     /// Name of the app being captured on its own, or nil for the whole screen.
     @Published private(set) var targetName: String?
+    /// Screen Recording isn't granted for this build (often a stale grant from an older build).
+    @Published private(set) var needsPermission = false
 
     private var systemPaused = false
     private let buffer = ReplayBuffer()
@@ -181,6 +183,22 @@ final class Recorder: ObservableObject {
     }
 
     // MARK: Control
+
+    /// macOS ties the grant to the app's signature, so a rebuilt Ribbon can show as "on" yet be denied.
+    /// Clearing Ribbon's own entry and relaunching makes macOS ask again for this exact build.
+    func resetPermission() {
+        guard let id = Bundle.main.bundleIdentifier else { return }
+        let reset = Process()
+        reset.executableURL = URL(fileURLWithPath: "/usr/bin/tccutil")
+        reset.arguments = ["reset", "ScreenCapture", id]
+        try? reset.run()
+        reset.waitUntilExit()
+        let relaunch = Process()
+        relaunch.executableURL = URL(fileURLWithPath: "/bin/sh")
+        relaunch.arguments = ["-c", "sleep 1; open \"$1\"", "sh", Bundle.main.bundleURL.path]
+        try? relaunch.run()
+        NSApp.terminate(nil)
+    }
 
     func restart() {
         let previous = task
@@ -265,9 +283,11 @@ final class Recorder: ObservableObject {
     private func startStreams() async {
         let cfg = Config.current(target: resolvedTarget())
         guard CGPreflightScreenCaptureAccess() || CGRequestScreenCaptureAccess() else {
-            status = "Allow Ribbon in System Settings › Privacy & Security › Screen Recording, then reopen Ribbon."
+            needsPermission = true
+            status = "Screen Recording isn't allowed for this build. Use Fix Permission below."
             return
         }
+        needsPermission = false
         if cfg.mic, AVCaptureDevice.authorizationStatus(for: .audio) == .notDetermined {
             _ = await AVCaptureDevice.requestAccess(for: .audio)
         }

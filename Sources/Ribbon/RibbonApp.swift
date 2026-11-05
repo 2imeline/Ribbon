@@ -30,6 +30,9 @@ private struct MenuContent: View {
 
     var body: some View {
         Text(recorder.status)
+        if recorder.needsPermission {
+            Button("Fix Screen Recording Permission…") { recorder.resetPermission() }
+        }
         Button("Save Clip (\(hotkey))") { recorder.saveClip() }
             .disabled(!recorder.isRecording)
         TargetPicker().pickerStyle(.menu)
