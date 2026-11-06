@@ -188,11 +188,13 @@ final class Recorder: ObservableObject {
     /// Clearing Ribbon's own entry and relaunching makes macOS ask again for this exact build.
     func resetPermission() {
         guard let id = Bundle.main.bundleIdentifier else { return }
-        let reset = Process()
-        reset.executableURL = URL(fileURLWithPath: "/usr/bin/tccutil")
-        reset.arguments = ["reset", "ScreenCapture", id]
-        try? reset.run()
-        reset.waitUntilExit()
+        for service in ["ScreenCapture", "Microphone"] {
+            let reset = Process()
+            reset.executableURL = URL(fileURLWithPath: "/usr/bin/tccutil")
+            reset.arguments = ["reset", service, id]
+            try? reset.run()
+            reset.waitUntilExit()
+        }
         let relaunch = Process()
         relaunch.executableURL = URL(fileURLWithPath: "/bin/sh")
         relaunch.arguments = ["-c", "sleep 1; open \"$1\"", "sh", Bundle.main.bundleURL.path]
@@ -284,7 +286,7 @@ final class Recorder: ObservableObject {
         let cfg = Config.current(target: resolvedTarget())
         guard CGPreflightScreenCaptureAccess() || CGRequestScreenCaptureAccess() else {
             needsPermission = true
-            status = "Screen Recording isn't allowed for this build. Use Fix Permission below."
+            status = "Screen Recording isn't allowed for this build. Use Fix Permissions below."
             return
         }
         needsPermission = false
@@ -383,6 +385,11 @@ final class Recorder: ObservableObject {
             isRecording = true
             targetName = targetApp?.applicationName
             status = recordingStatus(cfg)
+            // A denied mic is silent in ScreenCaptureKit (no error), so say so instead of recording without it.
+            if cfg.mic && AVCaptureDevice.authorizationStatus(for: .audio) != .authorized {
+                needsPermission = true
+                status += " (no mic: permission missing)"
+            }
             if let targetApp, targetApp.bundleIdentifier != announced {
                 let hotkey = UserDefaults.standard.string(forKey: K.hotkeyLabel) ?? Defaults.hotkeyLabel
                 Toast.show("Now clipping \(targetApp.applicationName) · \(hotkey) to save", icon: "gamecontroller.fill")
