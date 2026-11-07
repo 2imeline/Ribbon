@@ -32,6 +32,8 @@ enum Defaults {
 }
 
 let discordBundleIDs: Set<String> = ["com.hnc.Discord", "com.hnc.DiscordPTB", "com.hnc.DiscordCanary"]
+/// Apps whose audio never goes into clips (their windows still do).
+let mutedBundleIDs: Set<String> = ["com.roblox.RobloxStudio"]
 
 /// Everything that requires rebuilding the capture pipeline when it changes (except clipSeconds).
 struct Config: Equatable {

@@ -47,6 +47,7 @@ Clips are saved to `~/Movies/Ribbon` as `<Game> 2026-11-04 14.33.02.mp4`. The na
 - **Codec:** H.264 (default, plays everywhere) or HEVC (smaller files).
 - **Audio:** game/app audio (the target app's audio, or all system audio when recording the whole screen), Discord, and microphone each turn on or off separately, and you can pick the microphone. All enabled sources are mixed into one track so every player hears them.
   Turning Discord off also hides Discord's windows from clips, because macOS filters audio per app along with its windows.
+  Roblox Studio's audio is never recorded. Its windows still show in clips.
 - **Hotkey**, **save folder**, **save sound**, **open at login**.
 
 ## Why it's light

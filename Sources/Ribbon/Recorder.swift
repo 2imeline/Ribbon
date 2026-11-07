@@ -153,7 +153,10 @@ final class Recorder: ObservableObject {
         if !activation { apps = GameDetector.pickableApps() }
         updateDetectedGame()
         // Discord's windows/audio are resolved when capture starts, so refresh if it opens or quits.
-        if !activation, let id, discordBundleIDs.contains(id), let c = running, !(c.game && c.discord && c.target == nil) {
+        // Muted apps (Roblox Studio) are excluded by app at start too, so a newly opened one needs a restart.
+        let discordMatters = id.map(discordBundleIDs.contains) == true && running.map { !($0.game && $0.discord && $0.target == nil) } == true
+        let mutedMatters = id.map(mutedBundleIDs.contains) == true && running.map { $0.game && $0.target == nil } == true
+        if !activation, discordMatters || mutedMatters {
             restart()
         } else {
             applySettings()
@@ -299,6 +302,9 @@ final class Recorder: ObservableObject {
             let me = content.applications.filter { $0.bundleIdentifier == Bundle.main.bundleIdentifier }
             let discordApps = content.applications.filter { discordBundleIDs.contains($0.bundleIdentifier) }
             let targetApp = cfg.target.flatMap { id in content.applications.first { $0.bundleIdentifier == id } }
+            let mutedApps = content.applications.filter { mutedBundleIDs.contains($0.bundleIdentifier) }
+            // App audio, unless the app being recorded is itself muted.
+            let gameAudio = cfg.game && !(targetApp.map { mutedBundleIDs.contains($0.bundleIdentifier) } ?? false)
 
             // Capture the display the target app's biggest window is on (else the main display).
             let targetWindow = targetApp.flatMap { app in
@@ -331,7 +337,7 @@ final class Recorder: ObservableObject {
             sc.colorSpaceName = CGColorSpace.itur_709
             sc.queueDepth = 4
             sc.showsCursor = true
-            sc.capturesAudio = cfg.game
+            sc.capturesAudio = gameAudio
             sc.excludesCurrentProcessAudio = true
             sc.sampleRate = 48_000
             sc.channelCount = 2
@@ -345,25 +351,30 @@ final class Recorder: ObservableObject {
             let targetIsDiscord = targetApp.map { discordBundleIDs.contains($0.bundleIdentifier) } ?? false
             let filter: SCContentFilter
             if let targetApp {
-                let addDiscord = cfg.game && cfg.discord && !targetIsDiscord
+                let addDiscord = gameAudio && cfg.discord && !targetIsDiscord
                 let discordWindows = content.windows.filter { w in
                     discordBundleIDs.contains(w.owningApplication?.bundleIdentifier ?? "")
                 }
                 filter = SCContentFilter(display: display, including: [targetApp] + (addDiscord ? discordApps : []),
                                          exceptingWindows: addDiscord ? discordWindows : [])
             } else {
-                filter = SCContentFilter(display: display, excludingApplications: cfg.discord ? me : me + discordApps,
-                                         exceptingWindows: [])
+                // Muted apps are excluded (drops their audio), then their windows are put back into the picture.
+                let mutedWindows = content.windows.filter { w in
+                    mutedBundleIDs.contains(w.owningApplication?.bundleIdentifier ?? "")
+                }
+                filter = SCContentFilter(display: display,
+                                         excludingApplications: (cfg.discord ? me : me + discordApps) + mutedApps,
+                                         exceptingWindows: mutedWindows)
             }
             let stream = SCStream(filter: filter, configuration: sc, delegate: buffer)
             try stream.addStreamOutput(buffer, type: .screen, sampleHandlerQueue: buffer.queue)
-            if cfg.game { try stream.addStreamOutput(buffer, type: .audio, sampleHandlerQueue: buffer.queue) }
+            if gameAudio { try stream.addStreamOutput(buffer, type: .audio, sampleHandlerQueue: buffer.queue) }
             if cfg.mic { try stream.addStreamOutput(buffer, type: .microphone, sampleHandlerQueue: buffer.queue) }
             streams = [stream]
             try await stream.startCapture()
 
             // Game audio off but Discord on: the main stream has no audio, so a Discord-only stream can't double anything.
-            if cfg.discord && !cfg.game && !discordApps.isEmpty && !targetIsDiscord {
+            if cfg.discord && !gameAudio && !discordApps.isEmpty && !targetIsDiscord {
                 let ac = SCStreamConfiguration()
                 ac.width = 2
                 ac.height = 2
